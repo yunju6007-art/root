@@ -15,23 +15,21 @@ app.post('/track', async (req, res) => {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        data: [{
-          event_name: body.event || 'Lead',
-          event_time: Math.floor(Date.now()/1000),
-          event_id: body.event_id,
-          action_source: 'website',
-          user_data: {
-            client_ip_address: req.headers['x-forwarded-for'],
-            client_user_agent: req.headers['user-agent']
-          },
-          custom_data: {
-            content_name: body.label
-          }
-        }]
-        test_event_code: 'TEST71233'
-      })
-    });
-
+  data: [{
+    event_name: body.event || 'Lead',
+    event_time: Math.floor(Date.now()/1000),
+    event_id: body.event_id,
+    action_source: 'website',
+    user_data: {
+      client_ip_address: req.headers['x-forwarded-for'],
+      client_user_agent: req.headers['user-agent']
+    },
+    custom_data: {
+      content_name: body.label
+    }
+  }],
+  test_event_code: 'TEST71233'
+})
     console.log('✅ CAPI:', body.label);
     res.json({success:true});
 
