@@ -8,7 +8,7 @@ app.use(express.json({ type: ['application/json', 'text/plain'] }));
 app.use(express.text());
 
 const PIXEL_ID = '2079561172587594';
-const ACCESS_TOKEN = '你的token';
+const ACCESS_TOKEN = 'EAAg9kpg2aZCsBRXNu9Dbc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkdqsp9tvEX9SXts08NHCagqfuWR0hc5a8iZCMfbmfZBdDrcpkKC8d7xJTVAVVVwpfS1LWZAA69rZAvogXM0EGhIMfGEC44X0vwADgFhYmpPbLPf0d9JoHHrPPzKuQwJyaspM8zdaP7vgZDZD';
 
 app.post('/track', async (req, res) => {
   try {
