@@ -14,25 +14,29 @@ app.post('/track', async (req, res) => {
     console.log('收到请求:', body); // ✅ 调试
 
     const fbRes = await fetch(`https://graph.facebook.com/v18.0/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        data: [{
-          event_name: body.event || 'Lead',
-          event_time: Math.floor(Date.now()/1000),
-          event_id: body.event_id,
-          action_source: 'website',
-          user_data: {
-            client_ip_address: req.headers['x-forwarded-for'],
-            client_user_agent: req.headers['user-agent']
-          },
-          custom_data: {
-            content_name: body.label
-          }
-        }],
-        test_event_code: 'TEST71233'
-      })
-    }); // ✅ 这里必须有
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({
+    data: [{
+      event_name: body.event || 'Lead',
+      event_time: Math.floor(Date.now()/1000),
+      event_id: body.event_id,
+      action_source: 'website',
+      user_data: {
+        client_ip_address: req.headers['x-forwarded-for'],
+        client_user_agent: req.headers['user-agent']
+      },
+      custom_data: {
+        content_name: body.label
+      }
+    }],
+    test_event_code: 'TEST71233'
+  })
+});
+
+// 👇 打印 Facebook 返回
+const result = await fbRes.text();
+console.log('🔥 FB返回:', result);
 
     const result = await fbRes.json();
     console.log('FB返回:', result); // 🔥关键
