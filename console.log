@@ -1,25 +1,13 @@
-// ✅ CORS 允许（关键修复）
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
 const express = require('express');
 const fetch = require('node-fetch');
 
 const app = express();
 
-/* ✅ CORS（解决你现在 OPTIONS 卡住问题） */
+/* ✅ CORS（只保留这一段！！） */
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  res.header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
@@ -33,7 +21,7 @@ app.use(express.json({ type: ['application/json', 'text/plain'] }));
 app.use(express.text());
 
 const PIXEL_ID = '2079561172587594';
-const ACCESS_TOKEN = 'EAAg9kpg2aZCsBRXNu9Dbc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkf5rpq6g7u29bc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdk7702hp4k0p7mzcfqa92c9ef5rpq6g7u29bc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkpfS1LWZAA69rZAvogXM0EGhIMfGEC44X0vwADgFhYmpPbLPf0d9JoHHrPPzKuQwJyaspM8zdaP7vgZDZD';
+const ACCESS_TOKEN = 'EAAg9kpg2aZCsBRXNu9Dbc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkdqsp9tvEX9SXts08NHCagqfuWR0hc5a8iZCMfbmfZBdDrcpkKC8d7xJTVAVVVwpfS1LWZAA69rZAvogXM0EGhIMfGEC44X0vwADgFhYmpPbLPf0d9JoHHrPPzKuQwJyaspM8zdaP7vgZDZD';
 
 app.post('/track', async (req, res) => {
   try {
@@ -61,7 +49,6 @@ app.post('/track', async (req, res) => {
             event_id: body.event_id,
             action_source: 'website',
             user_data: {
-              // ✅ 修复 IP（取第一个）
               client_ip_address: (req.headers['x-forwarded-for'] || '').split(',')[0],
               client_user_agent: req.headers['user-agent']
             },
@@ -74,7 +61,6 @@ app.post('/track', async (req, res) => {
       }
     );
 
-    /* ✅ 只保留一个解析（避免你之前的报错） */
     const result = await fbRes.json();
     console.log('🔥 FB返回:', result);
 
