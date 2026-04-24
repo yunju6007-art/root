@@ -77,6 +77,25 @@ app.post('/track', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+// 👇 测试接口：检测 token 是否有效
+app.get('/test', async (req, res) => {
+  try {
+    const test = await fetch(`https://graph.facebook.com/v19.0/${PIXEL_ID}?fields=id&access_token=${ACCESS_TOKEN}`);
+    const data = await test.json();
+    console.log('✅ TOKEN 测试成功：', data);
+    res.json(data);
+  } catch (e) {
+    console.log('❌ TOKEN 测试失败：', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+// 👆 复制到这里 ↑
+
+// 原来的 listen 不动
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('✅ 服务启动成功，端口:', PORT);
+});
 app.listen(PORT, () => {
   console.log('✅ 服务启动成功，端口:', PORT);
 });
