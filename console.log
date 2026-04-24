@@ -3,44 +3,37 @@ const fetch = require('node-fetch');
 
 const app = express();
 
-// ✅ 强制启用CORS，支持OPTIONS预检
+// ✅ CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
 
-// ✅ 支持JSON和text/plain两种格式（sendBeacon会发text/plain）
+// ✅ 解析请求体
 app.use(express.json({ type: ['application/json', 'text/plain'] }));
 app.use(express.text());
 
-// 你的配置
+// 配置
 const PIXEL_ID = '2079561172587594';
 const ACCESS_TOKEN = 'EAAg9kpg2aZCsBRXNu9Dbc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkf5rpq6g7u29bc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdk7702hp4k0p7mzcfqa92c9ef5rpq6g7u29bc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkpfS1LWZAA69rZAvogXM0EGhIMfGEC44X0vwADgFhYmpPbLPf0d9JoHHrPPzKuQwJyaspM8zdaP7vgZDZD';
 const TEST_EVENT_CODE = 'TEST71233';
 
-// ✅ 主接口：/track
+// ✅ 1. 主接口：/track
 app.post('/track', async (req, res) => {
   try {
     let body = req.body;
-
-    // 兼容字符串/JSON两种格式
     if (typeof body === 'string') {
-      try {
-        body = JSON.parse(body);
-      } catch (e) {
-        console.log('❌ JSON解析失败:', body);
+      try { body = JSON.parse(body); } catch (e) {
+        console.log('❌ JSON parse error:', body);
         return res.status(400).json({ error: 'Invalid JSON' });
       }
     }
 
     console.log('✅ 收到前端数据:', body);
 
-    // ✅ 调用Facebook Conversions API
     const fbRes = await fetch(
       `https://graph.facebook.com/v19.0/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`,
       {
@@ -50,10 +43,10 @@ app.post('/track', async (req, res) => {
           data: [{
             event_name: body.event || 'Lead',
             event_time: Math.floor(Date.now() / 1000),
-            event_id: body.event_id || undefined,
+            event_id: body.event_id,
             action_source: 'website',
             user_data: {
-              client_ip_address: (req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim(),
+              client_ip_address: (req.headers['x-forwarded-for'] || '').split(',')[0].trim(),
               client_user_agent: req.headers['user-agent'] || ''
             },
             custom_data: {
@@ -66,8 +59,7 @@ app.post('/track', async (req, res) => {
     );
 
     const result = await fbRes.json();
-    console.log('🔥 Facebook 返回:', result); // 你要的日志这里会打印
-
+    console.log('🔥 Facebook 返回:', result);
     res.json({ success: true, result });
 
   } catch (err) {
@@ -76,26 +68,21 @@ app.post('/track', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-// 👇 测试接口：检测 token 是否有效
+// ✅ 2. 测试接口：/test（必须写在 app.listen 之前！）
 app.get('/test', async (req, res) => {
   try {
     const test = await fetch(`https://graph.facebook.com/v19.0/${PIXEL_ID}?fields=id&access_token=${ACCESS_TOKEN}`);
     const data = await test.json();
-    console.log('✅ TOKEN 测试成功：', data);
+    console.log('✅ TOKEN 测试成功:', data);
     res.json(data);
   } catch (e) {
-    console.log('❌ TOKEN 测试失败：', e.message);
+    console.log('❌ TOKEN 测试失败:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
-// 👆 复制到这里 ↑
 
-// 原来的 listen 不动
+// ✅ 启动服务
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log('✅ 服务启动成功，端口:', PORT);
-});
-app.listen(PORT, () => {
-  console.log('✅ 服务启动成功，端口:', PORT);
+  console.log('✅ 服务已启动，端口:', PORT);
 });
