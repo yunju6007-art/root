@@ -3,81 +3,74 @@ const fetch = require('node-fetch');
 
 const app = express();
 
-/* ✅ CORS */
+// ✅ 修复：最强 CORS，彻底解决跨域错误
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-
-  // ❗这里不能用 *
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', false);
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
 
-/* ✅ 兼容 sendBeacon */
-app.use(express.json({ type: ['application/json', 'text/plain'] }));
+// ✅ 兼容所有前端请求格式
+app.use(express.json({ limit: '2mb', type: ['application/json', 'text/plain'] }));
 app.use(express.text());
 
+// ===================== 你的配置 =====================
 const PIXEL_ID = '2079561172587594';
-const ACCESS_TOKEN = 'EAAg9kpg2aZCsBRXNu9Dbc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkdqsp9tvEX9SXts08NHCagqfuWR0hc5a8iZCMfbmfZBdDrcpkKC8d7xJTVAVVVwpfS1LWZAA69rZAvogXM0EGhIMfGEC44X0vwADgFhYmpPbLPf0d9JoHHrPPzKuQwJyaspM8zdaP7vgZDZD'; // ⚠️建议放环境变量
+const ACCESS_TOKEN = 'EAAg9kpg2aZCsBRXNu9Dbc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkf5rpq6g7u29bc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdk7702hp4k0p7mzcfqa92c9ef5rpq6g7u29bc1p4y2a9f5d698reyse7702hp4k0p7mzcfqa92c9ef5rpq6g7u293yqs3vvdkpfS1LWZAA69rZAvogXM0EGhIMfGEC44X0vwADgFhYmpPbLPf0d9JoHHrPPzKuQwJyaspM8zdaP7vgZDZD';
+const TEST_EVENT_CODE = 'TEST71233'; // 测试码
+// ====================================================
 
 app.post('/track', async (req, res) => {
   try {
-
     let body = req.body;
 
+    // 兼容字符串/JSON 两种格式
     if (typeof body === 'string') {
-      try {
-        body = JSON.parse(body);
-      } catch(e) {}
+      try { body = JSON.parse(body); } catch (e) {}
     }
 
-    console.log('收到:', body);
+    console.log('✅ 前端上报数据：', body);
 
+    // 发送 Facebook Conversions API
     const fbRes = await fetch(
-      `https://graph.facebook.com/v18.0/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`,
+      `https://graph.facebook.com/v19.0/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`,
       {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           data: [{
             event_name: body.event || 'Lead',
-            event_time: Math.floor(Date.now()/1000),
-            event_id: body.event_id,   // ⭐去重关键
+            event_time: Math.floor(Date.now() / 1000),
+            event_id: body.event_id || undefined,
             action_source: 'website',
-
             user_data: {
-              client_ip_address: (req.headers['x-forwarded-for'] || '').split(',')[0],
-              client_user_agent: req.headers['user-agent']
+              client_ip_address: (req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim(),
+              client_user_agent: req.headers['user-agent'] || ''
             },
-
             custom_data: {
-              content_name: body.label || 'unknown',
-              page_url: body.page_url
+              content_name: body.label || 'unknown'
             }
           }],
-
-          test_event_code: 'TEST71233' // 测试用
+          test_event_code: TEST_EVENT_CODE
         })
       }
     );
 
     const result = await fbRes.json();
-    console.log('🔥 FB返回:', result);
-
-    res.json({success:true});
+    console.log('🔥 Facebook 返回：', result);
+    res.json({ success: true, data: result });
 
   } catch (e) {
-    console.log('❌ error', e);
-    res.status(500).json({error:true});
+    console.log('❌ 错误：', e);
+    res.status(500).json({ error: true, msg: e.message });
   }
 });
 
-app.listen(3000, () => {
-  console.log('running');
+// Railway 自动使用环境端口
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ 服务已启动：端口 ${PORT}`);
 });
